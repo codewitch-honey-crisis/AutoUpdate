@@ -13,11 +13,11 @@ namespace AutoUpdate
 		static readonly Lazy<IDictionary<Version, Uri>> _lazyVersionUrls = 
 			new Lazy<IDictionary<Version, Uri>>(() => _GetVersionUrls());
 
-		public static bool AutoUpdate()
+		public static bool AutoUpdate(string[] args)
 		{
 			if (HasUpdate)
 			{
-				_Update();
+				_Update(args);
 				return true;
 			}
 			return false;
@@ -28,7 +28,7 @@ namespace AutoUpdate
 				return _lazyVersionUrls.Value;
 			}
 		}
-		public static string GitHubRepo { get; set; } = "/codewitch-honey-crisis/AutoUpdate";
+		public static string GitHubRepo { get; set; } 
 		public static string GitHubRepoName {
 			get {
 				var si = GitHubRepo.LastIndexOf('/');
@@ -43,9 +43,18 @@ namespace AutoUpdate
 						Regex.Escape(GitHubRepo), @"\/releases\/download\/Refresh.v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+.*\.zip");
 
 			Regex urlMatcher = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.Compiled);
-			WebRequest wrq = WebRequest.Create(string.Concat("https://github.com", GitHubRepo, "/releases/latest"));
-			WebResponse wrs = wrq.GetResponse();
 			var result = new Dictionary<Version, Uri>();
+			WebRequest wrq = WebRequest.Create(string.Concat("https://github.com", GitHubRepo, "/releases/latest"));
+			WebResponse wrs = null;
+			try
+			{
+				wrs = wrq.GetResponse();
+			}
+			catch(Exception ex)
+			{
+				Debug.WriteLine("Error fetching repo: "+ex.Message);
+				return result;
+			}
 			using (var sr = new StreamReader(wrs.GetResponseStream()))
 			{
 				string line;
@@ -82,7 +91,7 @@ namespace AutoUpdate
 				return va[va.Count - 1];
 			}
 		}
-		public static void _Update()
+		static void _Update(string[] args)
 		{
 			var ns = typeof(Updater).Namespace;
 			var names = Assembly.GetExecutingAssembly().GetManifestResourceNames();
@@ -93,7 +102,7 @@ namespace AutoUpdate
 				if(name.Contains(".ZZupdater0."))
 				{
 					var respath = name;
-					if(string.IsNullOrEmpty(exename) && !name.EndsWith(".json"))
+					if(string.IsNullOrEmpty(exename) && name.EndsWith(".exe"))
 						exename = name.Substring(name.IndexOf('.') + 1);
 					name = name.Substring(name.IndexOf('.') + 1);
 					using (var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream(respath))
@@ -106,14 +115,17 @@ namespace AutoUpdate
 			if(null!=exename)
 			{
 				var psi = new ProcessStartInfo();
-				var args = new StringBuilder();
-				args.Append(Process.GetCurrentProcess().Id);
-				args.Append(' ');
-				args.Append(_Esc(Assembly.GetEntryAssembly().GetModules()[0].Name));
-				args.Append(' ');
-				args.Append(_Esc(_VersionUrls[LatestVersion].ToString()));
+				var sb = new StringBuilder();
+				sb.Append(_Esc(Assembly.GetEntryAssembly().GetModules()[0].Name));
+				sb.Append(' ');
+				sb.Append(_Esc(_VersionUrls[LatestVersion].ToString()));
+				for(var i = 0;i<args.Length;++i)
+				{
+					sb.Append(' ');
+					sb.Append(_Esc(args[i]));
+				}
+				psi.Arguments = sb.ToString();
 				psi.FileName = exename;
-				psi.CreateNoWindow = false;
 				var proc = Process.Start(psi);
 			}
 

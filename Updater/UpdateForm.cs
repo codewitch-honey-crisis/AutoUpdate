@@ -9,6 +9,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -64,14 +65,13 @@ namespace Updater
 			for(var i = 2;i<_args.Length;i++)
 				args.Append(_Esc(_args[i]));
 			psi.FileName = exeName;
-			psi.CreateNoWindow = false;
+			psi.Arguments = args.ToString();
 			var proc = Process.Start(psi);
-			Process.Start(exeName);
 			Close();
 		}
 		public string Status {
 			get { return label1.Text; }
-			set { label1.Text = value; }
+			set { label1.Text = value; Refresh(); }
 		}
 
 		void IProgress<string>.Report(string value)
