@@ -33,6 +33,8 @@ namespace Updater
 			WebResponse wrs = wrq.GetResponse();
 			using (var stm = wrs.GetResponseStream())
 			{
+				// equiv of this. but not available on this platform:
+				//zip.ExtractToDirectory(Environment.CurrentDirectory, true);
 				var zip = new ZipArchive(stm);
 				foreach(var entry in zip.Entries)
 				{
@@ -54,16 +56,20 @@ namespace Updater
 					using (var stm1 = entry.Open())
 						using(var stm2 = File.OpenWrite(entry.FullName))
 							stm1.CopyTo(stm2);
-					
-					
 				}
-				//zip.ExtractToDirectory(Environment.CurrentDirectory, true);
+				
+				
 			}
 			Status = "Launching application...";
 			var psi = new ProcessStartInfo();
 			var args = new StringBuilder();
-			for(var i = 2;i<_args.Length;i++)
+			var delim = "";
+			for (var i = 2; i < _args.Length; i++)
+			{
+				args.Append(delim);
 				args.Append(_Esc(_args[i]));
+				args.Append(' ');
+			}
 			psi.FileName = exeName;
 			psi.Arguments = args.ToString();
 			var proc = Process.Start(psi);

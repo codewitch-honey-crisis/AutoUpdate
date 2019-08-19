@@ -19,6 +19,22 @@ namespace AutoUpdate
 			{
 				Update(args);
 				return true;
+			} else
+			{
+				// delete the updater files. We scan the resources so we know what they are
+				var names = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+				for (var i = 0; i < names.Length; i++)
+				{
+					var name = names[i];
+					if (name.Contains(".ZZupdater0."))
+					{
+						try
+						{
+							File.Delete(name.Substring(name.IndexOf('.') + 1));
+						}
+						catch { }
+					}
+				}
 			}
 			return false;
 		}
@@ -109,8 +125,11 @@ namespace AutoUpdate
 						exename = name.Substring(name.IndexOf('.') + 1);
 					name = name.Substring(name.IndexOf('.') + 1);
 					using (var stm = Assembly.GetExecutingAssembly().GetManifestResourceStream(respath))
-						using(var stm2=File.OpenWrite(name))
-							stm.CopyTo(stm2);
+					using (var stm2 = File.OpenWrite(name))
+					{
+						stm2.SetLength(0L);
+						stm.CopyTo(stm2);
+					}
 
 					
 				}
