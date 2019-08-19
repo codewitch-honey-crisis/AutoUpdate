@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -20,11 +21,15 @@ namespace AutoUpdate
 			{
 				cmdArgs.Text += " ";
 				cmdArgs.Text += _Esc(str);
-			}	
+			}
+			vers.Text = Assembly.GetEntryAssembly().GetName().Version.ToString();
 		}
+
 		static string _Esc(string arg)
 		{
 			return string.Concat("\"", arg.Replace("\"", "\"\""), "\"");
 		}
+
+	
 	}
 }

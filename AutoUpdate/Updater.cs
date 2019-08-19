@@ -17,7 +17,7 @@ namespace AutoUpdate
 		{
 			if (HasUpdate)
 			{
-				_Update(args);
+				Update(args);
 				return true;
 			}
 			return false;
@@ -40,7 +40,8 @@ namespace AutoUpdate
 
 			string pattern =
 					string.Concat(
-						Regex.Escape(GitHubRepo), @"\/releases\/download\/Refresh.v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+.*\.zip");
+						Regex.Escape(GitHubRepo), 
+						@"\/releases\/download\/Refresh.v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+.*\.zip");
 
 			Regex urlMatcher = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.Compiled);
 			var result = new Dictionary<Version, Uri>();
@@ -91,7 +92,9 @@ namespace AutoUpdate
 				return va[va.Count - 1];
 			}
 		}
-		static void _Update(string[] args)
+		public static void Update(string[] args = null)
+			=> Update(LatestVersion, args);
+		public static void Update(Version version,string[] args=null)
 		{
 			var ns = typeof(Updater).Namespace;
 			var names = Assembly.GetExecutingAssembly().GetManifestResourceNames();
@@ -118,11 +121,14 @@ namespace AutoUpdate
 				var sb = new StringBuilder();
 				sb.Append(_Esc(Assembly.GetEntryAssembly().GetModules()[0].Name));
 				sb.Append(' ');
-				sb.Append(_Esc(_VersionUrls[LatestVersion].ToString()));
-				for(var i = 0;i<args.Length;++i)
+				sb.Append(_Esc(_VersionUrls[version].ToString()));
+				if (null != args)
 				{
-					sb.Append(' ');
-					sb.Append(_Esc(args[i]));
+					for (var i = 0; i < args.Length; ++i)
+					{
+						sb.Append(' ');
+						sb.Append(_Esc(args[i]));
+					}
 				}
 				psi.Arguments = sb.ToString();
 				psi.FileName = exename;
